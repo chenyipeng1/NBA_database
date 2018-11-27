@@ -4,6 +4,6 @@
 
 ## Data set: https://www.kaggle.com/drgilermo/nba-players-stats#Seasons_Stats.csv
 
-## Data model: ![alt text](https://github.com/chenyipeng1/NBA_database/tree/master/static/img/model.png)
+## Data model: ![alt text](https://github.com/chenyipeng1/NBA_database/blob/master/static/img/model.png)
 
 ## Package Dependencies:
