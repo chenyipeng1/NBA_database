@@ -27,6 +27,19 @@ class TeamSerializer(serializers.ModelSerializer):
 		fields = ('team_id', 'team_name', 'season')
 
 
+class TeamTmpSerializer(serializers.ModelSerializer):
+
+	class Meta:
+		model = Team
+		fields = ('team_id', 'team_name')
+
+class SeasonTmpSerializer(serializers.ModelSerializer):
+
+	class Meta:
+		model = Season
+		fields = ('season_id', 'season_year')
+
+
 class PlayerTmpSerializer(serializers.ModelSerializer):
 
 	class Meta:
@@ -58,7 +71,7 @@ class PlayerSerializer(serializers.ModelSerializer):
 		many=False,
 		write_only=True,
 		queryset=StateCountry.objects.all(),
-		source='state_country'
+		source='player_birth_state'
 	)
 	player_college = CollegeSerializer(many=False, read_only=True)	
 	player_college_id = serializers.PrimaryKeyRelatedField(
@@ -66,79 +79,159 @@ class PlayerSerializer(serializers.ModelSerializer):
 		many=False,
 		write_only=True,
 		queryset=College.objects.all(),
-		source='college'
+		source='player_college'
 	)
-	season_player = SeasonPlayerSerializer(
-		source='season_player_set', # Note use of _set
-		many=True,
-		read_only=True
-	)
-	season_player_ids = serializers.PrimaryKeyRelatedField(
+	team = TeamTmpSerializer(many=True, read_only=True)	
+	team_id = serializers.PrimaryKeyRelatedField(
+		allow_null=False,
 		many=True,
 		write_only=True,
-		queryset=SeasonPlayer.objects.all(),
-		source='season_player'
+		queryset=Team.objects.all(),
+		source='team'
 	)
+	season = SeasonTmpSerializer(many=True, read_only=True)	
+	season_id = serializers.PrimaryKeyRelatedField(
+		allow_null=False,
+		many=True,
+		write_only=True,
+		queryset=Season.objects.all(),
+		source='season'	
+	)
+	# season_player = SeasonPlayerSerializer(
+	# 	source='season_player_set', # Note use of _set
+	# 	many=True,
+	# 	read_only=True
+	# )
+	# season_player_ids = serializers.PrimaryKeyRelatedField(
+	# 	many=True,
+	# 	write_only=True,
+	# 	queryset=SeasonPlayer.objects.all(),
+	# 	source='season_player'
+	# )
 
 	class Meta:
 		model = Player
 		fields = ('player_id', 'player_name', 'player_height', 'player_weight', 'player_birth_year', 
-					'player_birth_state','player_birth_state_id','player_college', 'player_college_id', 'team_display', 'season_display', 'season_player','season_player_ids')
+					'player_birth_state','player_birth_state_id','player_college', 'player_college_id',  'team','team_id', 'season','season_id')
+	# class Meta:
+	# 	model = Player
+	# 	fields = ('player_id', 'player_name', 'player_height', 'player_weight', 'player_birth_year', 
+	# 				'player_birth_state','player_birth_state_id','player_college', 'player_college_id', 'team_display', 'season_display', 'season_player','season_player_ids')
+
 
 
 	def create(self, validated_data):
 
 		print(validated_data)
 
-		player = Player.objects.create(**validated_data)
+		team = list(validated_data.pop('team'))
+		season = list(validated_data.pop('season'))
+		print("*" * 50)
+		print(team[0])
+		print("*" * 50)
+		print(season[0])
 
-		# if countries is not None:
-		# 	for country in countries:
-		# 		HeritageSiteJurisdiction.objects.create(
-		# 			heritage_site_id=site.heritage_site_id,
-		# 			country_area_id=country.country_area_id
-		# 		)
+		player = Player.objects.create(
+			player_name = validated_data.pop('player_name'),
+			player_height = validated_data.pop('player_height'),
+			player_weight = validated_data.pop('player_weight'),
+			player_birth_year = validated_data.pop('player_birth_year'),
+			player_birth_state = validated_data.pop('player_birth_state'),
+			player_college =validated_data.pop('player_college'),
+			)
+
+		#  to add Season_Player table, here we need to ensure that length of the team and season should be equal
+		if len(team) == len(season):
+			for i in range(len(team)):
+				SeasonPlayer.objects.create(
+					player_id = player.player_id,
+					season_id=season[i].season_id, 
+					team_id=team[i].team_id
+				)
+
+		# m = Player.objects.values_list('team', flat=True).filter(player_id = 4140)
+		# print("#" *50)
+		# print(m)
 		return player
 
 
 	def update(self, instance, validated_data):
 		# site_id = validated_data.pop('heritage_site_id')
-		player_id = instance.player_id
+		print(validated_data)
+		print(instance)
 		# new_countries = validated_data.pop('heritage_site_jurisdiction')
 
 		instance.player_name = validated_data.get(
 			'player_name',
 			instance.player_name
 		)
-
+		instance.player_height = validated_data.get(
+			'player_height',
+			instance.player_height
+		)
+		instance.player_weight = validated_data.get(
+			'player_weight',
+			instance.player_weight
+		)
+		instance.player_birth_year = validated_data.get(
+			'player_birth_year',
+			instance.player_birth_year
+		)
+		instance.player_birth_state = validated_data.get(
+			'player_birth_state',
+			instance.player_birth_state
+		)		
+		instance.player_college = validated_data.get(
+			'player_college',
+			instance.player_college
+		)
 		instance.save()
 
-		# # If any existing country/areas are not in updated list, delete them
-		# new_ids = []
-		# old_ids = HeritageSiteJurisdiction.objects \
-		# 	.values_list('country_area_id', flat=True) \
-		# 	.filter(heritage_site_id__exact=site_id)
+		# handle the SeasonPlayer table.
+		# notice the order input. Although for display, it may just display in ascending order (which is find). 
+		# But need to correct insert into Season Player by input order
 
-		# # TODO Insert may not be required (Just return instance)
 
-		# # Insert new unmatched country entries
-		# for country in new_countries:
-		# 	new_id = country.country_area_id
-		# 	new_ids.append(new_id)
-		# 	if new_id in old_ids:
-		# 		continue
-		# 	else:
-		# 		HeritageSiteJurisdiction.objects \
-		# 			.create(heritage_site_id=site_id, country_area_id=new_id)
+		# First get the value list. it's a list of list.
+		old_ids = list(SeasonPlayer.objects\
+							.values_list('team_id', 'season_id')\
+							.filter(player_id = instance.player_id)\
+							.order_by('season_player_id'))
+		new_ids = []
+		team = list(validated_data.pop('team'))
+		season = list(validated_data.pop('season'))
+		print(team, len(team))
+		if len(team) == len(season):
+			for i in range(len(team)):
+				tmp = (team[i].team_id, season[i].season_id)
+				new_ids.append(tmp)
+		else:
+			return instance
 
-		# # Delete old unmatched country entries
-		# for old_id in old_ids:
-		# 	if old_id in new_ids:
-		# 		continue
-		# 	else:
-		# 		HeritageSiteJurisdiction.objects \
-		# 			.filter(heritage_site_id=site_id, country_area_id=old_id) \
-		# 			.delete()
+		print(new_ids)
+		print(old_ids)
+		# compare new_ids and old_ids
+		# to insert
+		print("#" * 50)
+		for i in new_ids:
+			if i not in old_ids:
+				# i[0] for team, i[1] for season
+				print("case1: ", i[0], i[1])
+				SeasonPlayer.objects.create(
+					player_id = instance.player_id,
+					season_id=i[1], 
+					team_id=i[0]
+				)
+
+
+		# to delete
+		for i in old_ids:
+			if i not in new_ids:
+				SeasonPlayer.objects\
+				.filter(player_id = instance.player_id,
+					season_id=i[1], 
+					team_id=i[0])\
+				.delete()
+
 
 		return instance
-
