@@ -1,0 +1,34 @@
+{% extends 'nba_stats/base.html' %}
+{% block content %}
+
+<article>
+  <header>
+    <div class="row">
+      <div class="col-sm-11">
+        <h2>NBA Historical Player Performance</h2>
+      </div>
+
+    </div>
+  </header>
+
+
+  {% include 'nba_stats/pagination.html' %}
+
+  {% if teams %}
+  <ul>
+    {% for team in teams %}
+      {% if team.team_name %}
+        <!-- safe filter on for raw HTML stored in database -->
+        <li><a href="{% url 'team_detail' team.pk %}">{{ team.team_name | safe }}</a></li>
+      {% endif %}
+    {% endfor %}
+
+  </ul>
+  {% else %}
+  <p>No Teams are available to view.</p>
+  {% endif %}
+
+  <p>page count: {{ teams.count }}</p>
+</article>
+
+{% endblock content %}

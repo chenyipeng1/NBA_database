@@ -94,3 +94,4 @@ venv.bak/
 #other
 .DS_Store
 Thumbs.db
+.DS_Store?

@@ -1,0 +1,69 @@
+{% extends 'nba_stats/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+  <header>
+    <h2>Update Player</h2>
+  </header>
+
+  <form method="post" novalidate>
+  {% csrf_token %}
+  
+
+    <div class="row">
+      <div class="col-6">
+        {{ form.player_name|as_crispy_field }}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-6">
+        {{ form.player_height|as_crispy_field }}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-6">
+        {{ form.player_weight|as_crispy_field }}
+      </div>
+    </div>
+
+
+    <div class="row">
+      <div class="col-6">
+        {{ form.player_birth_year|as_crispy_field }}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-6">
+        {{ form.player_birth_state|as_crispy_field }}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-6">
+        {{ form.player_college|as_crispy_field }}
+      </div>
+    </div>
+    
+    
+    <div class="row" >
+      <div class="col-3">
+        {{ form.team|as_crispy_field }}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-3">
+        {{ form.season|as_crispy_field }}
+      </div>
+    </div>
+
+  <button type="submit" class="btn btn-outline-success">Update</button>
+  <a class="btn btn-outline-secondary" href="{% url 'players' %}">cancel</a>
+
+</form>
+
+{% endblock content %}
