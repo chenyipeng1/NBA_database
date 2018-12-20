@@ -11,3 +11,8 @@ https://www.kaggle.com/drgilermo/nba-players-stats#Seasons_Stats.csv
 ![alt text](https://github.com/chenyipeng1/NBA_database/blob/master/static/img/model.png)
 
 ## Package Dependencies:
+All the package are in the requirements.txt, you can use 
+```
+(venv) $ pip install -r requirements.txt
+```
+in your virtual environment.
