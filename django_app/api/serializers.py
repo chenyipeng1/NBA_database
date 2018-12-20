@@ -27,23 +27,21 @@ class TeamSerializer(serializers.ModelSerializer):
 		fields = ('team_id', 'team_name', 'season')
 
 
-class PlayerSerializer(serializers.ModelSerializer):
-	player_birth_state = StateCountrySerializer(many=False, read_only=True)
-	player_college = CollegeSerializer(many=False, read_only=True)	
-	# team = TeamSerializer( many=True, read_only=True)
-	# season = SeasonSerializer(many=True, read_only=True)
+class PlayerTmpSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Player
-		fields = ('player_id', 'player_name', 'player_height', 'player_weight', 'player_birth_year', 
-					'player_birth_state', 'player_college','team_display', 'season_display')
-
+		fields = ('player_id', 'player_name')
 
 class SeasonPlayerSerializer(serializers.ModelSerializer):
+	# player = PlayerTmpSerializer(many=False, read_only=True)
+	# team = TeamSerializer(many=False, read_only=True)
+	# season = SeasonSerializer(many=False, read_only=True)
+	player_id = serializers.ReadOnlyField(source='player.player_id')
+	team_id = serializers.ReadOnlyField(source='team.team_id')
+	season_id = serializers.ReadOnlyField(source='season.season_id')
 
-	player = PlayerSerializer(many=False, read_only=True)
-	team = TeamSerializer(many=False, read_only=True)
-	season = TeamSerializer(many=False, read_only=True)
+	# print(player_id, team_id, season_id)
 	class Meta:
 		model = SeasonPlayer
 		fields = ('season_player_id', 'player', 'team', 'season', 
@@ -52,6 +50,40 @@ class SeasonPlayerSerializer(serializers.ModelSerializer):
 					'player_trb', 'player_ast', 'player_stl', 'player_blk', 'player_tov', 'player_pf', 'player_pts')
 
 
+
+class PlayerSerializer(serializers.ModelSerializer):
+	player_birth_state = StateCountrySerializer(many=False, read_only=True)
+	player_birth_state_id = serializers.PrimaryKeyRelatedField(
+		allow_null=False,
+		many=False,
+		write_only=True,
+		queryset=StateCountry.objects.all(),
+		source='state_country'
+	)
+	player_college = CollegeSerializer(many=False, read_only=True)	
+	player_college_id = serializers.PrimaryKeyRelatedField(
+		allow_null=False,
+		many=False,
+		write_only=True,
+		queryset=College.objects.all(),
+		source='college'
+	)
+	season_player = SeasonPlayerSerializer(
+		source='season_player_set', # Note use of _set
+		many=True,
+		read_only=True
+	)
+	season_player_ids = serializers.PrimaryKeyRelatedField(
+		many=True,
+		write_only=True,
+		queryset=SeasonPlayer.objects.all(),
+		source='season_player'
+	)
+
+	class Meta:
+		model = Player
+		fields = ('player_id', 'player_name', 'player_height', 'player_weight', 'player_birth_year', 
+					'player_birth_state','player_birth_state_id','player_college', 'player_college_id', 'team_display', 'season_display', 'season_player','season_player_ids')
 
 
 	def create(self, validated_data):
@@ -71,7 +103,7 @@ class SeasonPlayerSerializer(serializers.ModelSerializer):
 
 	def update(self, instance, validated_data):
 		# site_id = validated_data.pop('heritage_site_id')
-		team_id = instance.team_id
+		player_id = instance.player_id
 		# new_countries = validated_data.pop('heritage_site_jurisdiction')
 
 		instance.player_name = validated_data.get(
