@@ -76,8 +76,12 @@ class PlayerCreateView(generic.View):
 			player.save()
 			if len(form.cleaned_data['team']) == len(form.cleaned_data['season']):
 				for i in range(len(form.cleaned_data['team'])):
-					SeasonPlayer.objects.create(player_id=player.player_id, team_id=form.cleaned_data['team'][i].team_id, season_id=form.cleaned_data['season'][i].season_id)
-				return redirect(player) # shortcut to object's get_absolute_url()
+					SeasonPlayer.objects.create(
+						player_id=player.player_id,
+						team_id=form.cleaned_data['team'][i].team_id,
+						season_id=form.cleaned_data['season'][i].season_id
+					)
+			return redirect(player) # shortcut to object's get_absolute_url()
 			# return HttpResponseRedirect(player.get_absolute_url())
 		return render(request, 'nba_stats/player_new.html', {'form': form})
 
